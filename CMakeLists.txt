@@ -3,4 +3,4 @@ project(diplom)
 
 set(CMAKE_CXX_STANDARD 17)
 
-add_executable(diplom main.cpp TreeTraversal.h TreeStrategy.h TreeFromOneFile.h tuple_io.h)
+add_executable(diplom main.cpp Traverser.cpp TraverserByIterator.cpp File.h Tree.h Tuple.h Record.h Key.h ManySourceStrategy.h SourceStrategy.h)

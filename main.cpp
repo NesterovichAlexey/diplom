@@ -2,63 +2,42 @@
 #include <fstream>
 #include <tuple>
 
-#include "tuple_io.h"
-#include "TreeFromOneFile.h"
-
-typedef std::tuple<int, int, int> KeyType;
-
-void testPreOrderWithOneFile() {
-    std::ofstream out("out-pre-one.txt");
-
-    int n = std::tuple_size<KeyType>::value;
-    TreeFromManyFiles<KeyType, int> tree("data.txt");
-    for (TreeFromManyFiles<KeyType, int>::PreOrderIterator it = tree.preOrderBegin(); it != tree.preOrderEnd(); ++it) {
-        out << n - it.depth << " " << it.keys << " " << *it << std::endl;
-    }
-    out.close();
-}
-
-void testPostOrderWithOneFile() {
-    std::ofstream out("out-post-one.txt");
-
-    int n = std::tuple_size<KeyType>::value;
-    int* sum = new int[n + 1];
-    for (int i = 0; i <= n; ++i) {
-        sum[i] = 0;
-    }
-    TreeFromManyFiles<KeyType, int> tree("data.txt");
-    for (TreeFromManyFiles<KeyType, int>::PostOrderIterator it = tree.postOrderBegin(); it != tree.postOrderEnd(); ++it) {
-        if (it.isLeaf()) {
-            sum[it.depth] = *it;
-        }
-        if (it.depth != 0) {
-            sum[it.depth - 1] += sum[it.depth];
-        }
-        out << it.depth << " " << it.keys << " " << sum[it.depth] << std::endl;
-        sum[it.depth] = 0;
-    }
-    out.close();
-}
+#include "File.h"
+#include "Tuple.h"
+#include "Tree.h"
+#include "ManySourceStrategy.h"
 
 int main() {
-    std::ofstream out("../out.txt");
-
-    int n = std::tuple_size<KeyType>::value;
-    int* sum = new int[n + 1];
-    for (int i = 0; i <= n; ++i) {
-        sum[i] = 0;
-    }
-    TreeFromManyFiles<KeyType, int> tree("../data.txt");
-    for (TreeFromManyFiles<KeyType, int>::PostOrderIterator it = tree.postOrderBegin(); it != tree.postOrderEnd(); ++it) {
+    typedef std::tuple<int, int, int, int> Tuple;
+    typedef KeyIndex<0, 2> Key;
+    typedef Record<Tuple, Key> Record;
+    typedef File<Record> File;
+    Tree<Record> file(new File("../data.txt"));
+    int sum[3] = {0, 0, 0};
+    for (auto it = file.beginPostOrderIterator(); it != file.endPostOrderIterator(); ++it) {
         if (it.isLeaf()) {
-            sum[it.depth] = *it;
+            sum[it.getDepth()] = std::get<1>(it->tuple) * std::get<3>(it->tuple);
         }
-        if (it.depth != 0) {
-            sum[it.depth - 1] += sum[it.depth];
+        if (it.getDepth() != 0) {
+            sum[it.getDepth() - 1] += sum[it.getDepth()];
         }
-        out << it.depth << " " << it.keys << " " << sum[it.depth] << std::endl;
-        sum[it.depth] = 0;
+        std::cout << it.getDepth() << " "
+                  << it->key.value << " "
+                  << sum[it.getDepth()] << std::endl;
+        sum[it.getDepth()] = 0;
     }
-    out.close();
+    std::cout << std::endl;
+    for (auto it = file.beginPreOrderIterator();
+         it != file.endPreOrderIterator(); ++it) {
+        std::cout << it.getDepth() << " " << it->tuple << std::endl;
+    }
+    std::cout << std::endl;
+//    typedef File<Record<std::tuple<int, int>, KeyIndex<0>>> File0;
+//    typedef File<Record<std::tuple<int, int, int>, KeyIndex<0, 1>>> File1;
+//    typedef File<Record<std::tuple<int, int, int, int>, KeyIndex<0, 1, 2>>> File2;
+//    ManyFilesStrategy<File0, File1, File2> files(std::make_tuple(File0("../data.txt0"), File1("../data.txt1"), File2("../data.txt2")));
+//    for (auto it = files.beginPreOrderIterator(); it != files.endPreOrderIterator(); ++it) {
+//        std::cout << it.getDepth() << " " << it->tuple << std::endl;
+//    }
     return 0;
 }
