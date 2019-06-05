@@ -73,22 +73,33 @@ public:
 template<class Tuple, int... Idx>
 using tuple_elements_t = typename tuple_elements<Tuple, Idx...>::type;
 
+template<class Tuple, int Count>
+struct TupleFirst {
+    static auto first(Tuple &tuple) {
+        return std::tuple_cat(
+                TupleFirst<Tuple, Count - 1>::first(tuple),
+                std::make_tuple(std::get<Count - 1>(tuple))
+        );
+    }
+};
+
+template<class Tuple>
+struct TupleFirst<Tuple, 1> {
+    static auto first(Tuple &tuple) {
+        return std::make_tuple(std::get<0>(tuple));
+    }
+};
+
 template<int Count, class Tuple>
 auto tuple_first(Tuple &tuple) {
-    if (Count == 1) {
-        return std::get<0>(tuple);
-    }
-    return std::tuple_cat(
-            tuple_first<Count - 1>(tuple),
-            std::get<Count - 1>(tuple)
-    );
+    return TupleFirst<Tuple, Count>::first(tuple);
 }
 
 template<class Tuple, std::size_t N>
 struct TupleComparator {
     static int compare(const Tuple &a, const Tuple &b) {
         int comp = TupleComparator<Tuple, N - 1>::compare(a, b);
-        if (comp == N - 1) {
+        if (comp == N) {
             comp += std::get<N>(a) == std::get<N>(b) ? 1 : 0;
         }
         return comp;
@@ -96,7 +107,7 @@ struct TupleComparator {
 };
 
 template<class Tuple>
-struct TupleComparator<Tuple, 1> {
+struct TupleComparator<Tuple, 0> {
     static int compare(const Tuple &a, const Tuple &b) {
         return std::get<0>(a) == std::get<0>(b) ? 1 : 0;
     }
@@ -108,11 +119,6 @@ int tuple_compare(std::tuple<Types...> &a, std::tuple<Types...> &b) {
             std::tuple<Types...>,
             sizeof...(Types) - 1
     >::compare(a, b);
-}
-
-template<class... Types>
-bool operator==(std::tuple<Types...> &a, std::tuple<Types...> &b) {
-    return a.tuple_compare(b) == sizeof...(Types);
 }
 
 #endif //DIPLOM_TUPLE_H

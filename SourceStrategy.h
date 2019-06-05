@@ -24,7 +24,7 @@ public:
 
     virtual bool hasNext() = 0;
 
-    virtual SourceStrategy *copy() = 0;
+    virtual std::shared_ptr<SourceStrategy> clone() = 0;
 };
 
 #endif //DIPLOM_SOURCESTRATEGY_H

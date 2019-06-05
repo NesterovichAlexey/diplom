@@ -1,5 +1,3 @@
-#include <utility>
-
 #ifndef DIPLOM_TREE_H
 #define DIPLOM_TREE_H
 
@@ -7,6 +5,7 @@
 #include "Record.h"
 #include "Key.h"
 #include <tuple>
+#include <iterator>
 
 template<typename Record>
 class Tree;
@@ -18,13 +17,13 @@ private:
     typedef Key<tuple_elements_t<Tuple, Idx...>> Key;
     typedef Record<Tuple, KeyIndex<Idx...>> Record;
     typedef SourceStrategy<Record> SourceStrategy;
-    SourceStrategy *source;
+    SourceStrategy &source;
 public:
-    explicit Tree(SourceStrategy *source) : source(source) {}
+    explicit Tree(SourceStrategy &source) : source(source) {}
 
     class PostOrderIterator {
     private:
-        SourceStrategy *source;
+        std::shared_ptr<SourceStrategy> source;
         int keyCount = sizeof...(Idx);
         int depth = keyCount;
 
@@ -50,7 +49,8 @@ public:
         }
 
     public:
-        explicit PostOrderIterator(SourceStrategy *file) : source(file) {}
+        explicit PostOrderIterator(std::shared_ptr<SourceStrategy> source)
+                : source(source) {}
 
         int getDepth() {
             return depth;
@@ -70,14 +70,12 @@ public:
         }
 
         PostOrderIterator operator++(int) {
-            auto t = std::make_tuple(1, "sdf");
-            std::cout << t;
             PostOrderIterator ret = *this;
             next();
             return ret;
         }
 
-        bool operator==(const PostOrderIterator &oth) const {
+        bool operator==(const PostOrderIterator &oth) {
             if (source == nullptr && oth.depth == -1 &&
                 (oth.source == nullptr ||
                  oth.source->hasNext() == false)) {
@@ -90,11 +88,11 @@ public:
             if (source == nullptr || oth.source == nullptr) {
                 return source == oth.source;
             }
-            return source->getRecord() == oth.getRecord() &&
+            return source->getRecord() == oth.source->getRecord() &&
                    depth == oth.depth;
         }
 
-        bool operator!=(const PostOrderIterator &oth) const {
+        bool operator!=(const PostOrderIterator &oth) {
             if (source == nullptr && oth.depth == -1 &&
                 (oth.source == nullptr ||
                  oth.source->hasNext() == false)) {
@@ -113,7 +111,7 @@ public:
     };
 
     PostOrderIterator beginPostOrderIterator() {
-        return PostOrderIterator(source->copy());
+        return PostOrderIterator(source.clone());
     }
 
     PostOrderIterator endPostOrderIterator() {
@@ -122,7 +120,7 @@ public:
 
     class PreOrderIterator {
     private:
-        SourceStrategy *source;
+        std::shared_ptr<SourceStrategy> source;
         int keyCount = sizeof...(Idx);
         int depth = 0;
 
@@ -146,7 +144,8 @@ public:
         }
 
     public:
-        explicit PreOrderIterator(SourceStrategy *source) : source(source) {}
+        explicit PreOrderIterator(std::shared_ptr<SourceStrategy> source)
+                : source(source) {}
 
         int getDepth() {
             return depth;
@@ -171,7 +170,7 @@ public:
             return ret;
         }
 
-        bool operator==(const PreOrderIterator &oth) const {
+        bool operator==(const PreOrderIterator &oth) {
             if (source == nullptr && oth.depth == keyCount + 1 &&
                 (oth.source == nullptr ||
                  oth.source->hasNext() == false)) {
@@ -188,7 +187,7 @@ public:
                    depth == oth.depth;
         }
 
-        bool operator!=(const PreOrderIterator &oth) const {
+        bool operator!=(const PreOrderIterator &oth) {
             if (source == nullptr && oth.depth == keyCount + 1 &&
                 (oth.source == nullptr ||
                  oth.source->hasNext() == false)) {
@@ -207,7 +206,7 @@ public:
     };
 
     PreOrderIterator beginPreOrderIterator() {
-        return PreOrderIterator(source->copy());
+        return PreOrderIterator(source.clone());
     }
 
     PreOrderIterator endPreOrderIterator() {

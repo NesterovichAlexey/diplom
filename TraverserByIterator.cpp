@@ -2,44 +2,43 @@
 #include <iostream>
 #include <vector>
 
-struct Node {
+struct BinaryNode {
     int data;
-    Node *parent = nullptr;
-    Node *left = nullptr;
-    Node *right = nullptr;
-    std::vector<Node> childrens;
+    BinaryNode *parent = nullptr;
+    BinaryNode *left = nullptr;
+    BinaryNode *right = nullptr;
 
-    Node(int data) : data(data) {}
+    BinaryNode(int data) : data(data) {}
 
-    void addLeft(Node *left) {
+    void addLeft(BinaryNode *left) {
         this->left = left;
         left->parent = this;
     }
 
-    void addRight(Node *right) {
+    void addRight(BinaryNode *right) {
         this->right = right;
         right->parent = this;
     }
 };
 
-class Tree {
+class BinaryTree {
 private:
-    Node *root;
+    BinaryNode *root;
 public:
-    Tree(Node *root) : root(root) {}
+    BinaryTree(BinaryNode *root) : root(root) {}
 
     class BaseIterator {
     protected:
-        Node *cur;
+        BinaryNode *node;
 
-        BaseIterator(Node *root) : cur(root) {}
+        BaseIterator(BinaryNode *root) : node(root) {}
 
         virtual void next() {};
 
     public:
-        Node &operator*() { return *cur; }
+        BinaryNode &operator*() { return *node; }
 
-        Node *operator->() { return cur; }
+        BinaryNode *operator->() { return node; }
 
         BaseIterator operator++() {
             next();
@@ -53,39 +52,39 @@ public:
         }
 
         bool operator==(const BaseIterator &oth) const {
-            return cur == oth.cur;
+            return node == oth.node;
         }
 
         bool operator!=(const BaseIterator &oth) const {
-            return !(cur == oth.cur);
+            return node != oth.node;
         }
     };
 
     class PreOrderIterator : public BaseIterator {
     protected:
         void next() override {
-            Node *prev = nullptr;
-            while (cur != nullptr) {
-                if (cur->left != nullptr && prev == nullptr) {
-                    cur = cur->left;
+            BinaryNode *prev = nullptr;
+            while (node != nullptr) {
+                if (node->left != nullptr && prev == nullptr) {
+                    node = node->left;
                     break;
-                } else if (cur->right != nullptr && cur->right != prev) {
-                    cur = cur->right;
+                } else if (node->right != nullptr && node->right != prev) {
+                    node = node->right;
                     break;
                 } else {
-                    prev = cur;
-                    cur = cur->parent;
+                    prev = node;
+                    node = node->parent;
                 }
             }
         }
 
     public:
-        explicit PreOrderIterator(Node *root) : BaseIterator(root) {}
+        explicit PreOrderIterator(BinaryNode *root) : BaseIterator(root) {}
     };
 
     class PostOrderIterator : public BaseIterator {
     private:
-        static Node *moveLeftRight(Node *node) {
+        static BinaryNode *moveLeftRight(BinaryNode *node) {
             while (node != nullptr) {
                 if (node->left != nullptr) {
                     node = node->left;
@@ -100,19 +99,19 @@ public:
 
     protected:
         void next() override {
-            if (cur != nullptr) {
-                Node *prev = cur;
-                cur = cur->parent;
-                if (cur != nullptr && cur->left == prev &&
-                    cur->right != nullptr) {
-                    cur = moveLeftRight(cur->right);
+            if (node != nullptr) {
+                BinaryNode *prev = node;
+                node = node->parent;
+                if (node != nullptr && node->left == prev &&
+                    node->right != nullptr) {
+                    node = moveLeftRight(node->right);
                 }
             }
         }
 
     public:
-        explicit PostOrderIterator(Node *root) : BaseIterator(
-                moveLeftRight(root)) {}
+        explicit PostOrderIterator(BinaryNode *root) :
+                BaseIterator(moveLeftRight(root)) {}
     };
 
     PreOrderIterator beginPreOrderIterator() {
@@ -132,29 +131,202 @@ public:
     }
 };
 
+void printBinaryTreeUseIterator() {
+    std::vector<BinaryNode*> nodes;
+    for (int i = 0; i < 10; ++i) {
+        nodes.push_back(new BinaryNode(i));
+    }
+    auto *root = nodes[0];
+    root->addLeft(nodes[1]);
+    root->left->addLeft(nodes[2]);
+    root->left->left->addRight(nodes[3]);
+    root->left->addRight(nodes[4]);
+    root->left->right->addLeft(nodes[5]);
+    root->addRight(nodes[6]);
+    root->right->addRight(nodes[7]);
+    root->right->right->addLeft(nodes[8]);
+    root->right->right->addRight(nodes[9]);
+    BinaryTree tree(root);
+    std::cout << "Binary tree pre order\n";
+    for (auto it = tree.beginPreOrderIterator(); it != tree.endPreOrderIterator(); ++it) {
+        std::cout << it->data << " ";
+    }
+    std::cout << std::endl;
+    std::cout << "Binary tree post order\n";
+    for (auto it = tree.beginPostOrderIterator(); it != tree.endPostOrderIterator(); ++it) {
+        std::cout << it->data << " ";
+    }
+    std::cout << std::endl;
+    for (int i = 0; i < 10; ++i) {
+        delete nodes[i];
+    }
+}
+
+struct Node {
+    int data;
+    Node *parent = nullptr;
+    std::vector<Node*> children;
+
+    Node(int data) : data(data) {}
+
+    void addNode(Node *node) {
+        children.push_back(node);
+        node->parent = this;
+    }
+};
+
+class Tree {
+private:
+    Node *root;
+public:
+    Tree(Node *root) : root(root) {}
+
+    class BaseIterator {
+    protected:
+        Node *node;
+
+        BaseIterator(Node *root) : node(root) {}
+
+        virtual void next() {};
+
+    public:
+        Node &operator*() { return *node; }
+
+        Node *operator->() { return node; }
+
+        BaseIterator operator++() {
+            next();
+            return *this;
+        }
+
+        BaseIterator operator++(int) {
+            BaseIterator ret = *this;
+            next();
+            return ret;
+        }
+
+        bool operator==(const BaseIterator &oth) const {
+            return node == oth.node;
+        }
+
+        bool operator!=(const BaseIterator &oth) const {
+            return node != oth.node;
+        }
+    };
+
+    class PreOrderIterator : public BaseIterator {
+    protected:
+        void next() override {
+            if (node != nullptr) {
+                Node *prev = nullptr;
+                if (node->children.empty() == false) {
+                    node = node->children[0];
+                    return;
+                } else {
+                    prev = node;
+                    node = node->parent;
+                }
+                while (node != nullptr) {
+                    int idx = 0;
+                    while (idx < node->children.size() &&
+                           node->children[idx] != prev) {
+                        ++idx;
+                    }
+                    if (idx == node->children.size() - 1) {
+                        prev = node;
+                        node = node->parent;
+                    } else {
+                        node = node->children[idx + 1];
+                        break;
+                    }
+                }
+            }
+        }
+
+    public:
+        explicit PreOrderIterator(Node *root) : BaseIterator(root) {}
+    };
+
+    class PostOrderIterator : public BaseIterator {
+    private:
+        void moveToLeaf() {
+            while (node != nullptr && node->children.empty() == false)
+                node = node->children[0];
+        }
+    protected:
+        void next() override {
+            if (node != nullptr) {
+                Node *prev = node;
+                node = node->parent;
+                if (node != nullptr) {
+                    int idx = 0;
+                    while (idx < node->children.size() &&
+                           node->children[idx] != prev)
+                        ++idx;
+                    if (idx != node->children.size() - 1) {
+                        node = node->children[idx + 1];
+                        moveToLeaf();
+                    }
+                }
+            }
+
+        }
+
+    public:
+        explicit PostOrderIterator(Node *root) : BaseIterator(root) {
+            moveToLeaf();
+        }
+    };
+
+    PreOrderIterator beginPreOrderIterator() {
+        return PreOrderIterator(root);
+    }
+
+    PreOrderIterator endPreOrderIterator() {
+        return PreOrderIterator(nullptr);
+    }
+
+    PostOrderIterator beginPostOrderIterator() {
+        return PostOrderIterator(root);
+    }
+
+    PostOrderIterator endPostOrderIterator() {
+        return PostOrderIterator(nullptr);
+    }
+};
+
+void printTreeUseIterator() {
+    std::vector<Node*> nodes;
+    for (int i = 0; i < 10; ++i) {
+        nodes.push_back(new Node(i));
+    }
+    nodes[0]->addNode(nodes[1]);
+    nodes[0]->addNode(nodes[2]);
+    nodes[0]->addNode(nodes[3]);
+    nodes[1]->addNode(nodes[4]);
+    nodes[1]->addNode(nodes[5]);
+    nodes[2]->addNode(nodes[6]);
+    nodes[3]->addNode(nodes[7]);
+    nodes[3]->addNode(nodes[8]);
+    nodes[7]->addNode(nodes[9]);
+    Tree tree(nodes[0]);
+    std::cout << "Tree pre order\n";
+    for (auto it = tree.beginPreOrderIterator(); it != tree.endPreOrderIterator(); ++it) {
+        std::cout << it->data << " ";
+    }
+    std::cout << std::endl;
+    std::cout << "Tree post order\n";
+    for (auto it = tree.beginPostOrderIterator(); it != tree.endPostOrderIterator(); ++it) {
+        std::cout << it->data << " ";
+    }
+    std::cout << std::endl;
+    for (int i = 0; i < 10; ++i) {
+        delete nodes[i];
+    }
+}
+
 //int main() {
-//    Node *root = new Node(0);
-//    root->addLeft(new Node(1));
-//    root->left->addLeft(new Node(2));
-//    root->left->left->addRight(new Node(3));
-//    root->left->addRight(new Node(4));
-//    root->left->right->addLeft(new Node(5));
-//    root->addRight(new Node(6));
-//    root->right->addRight(new Node(7));
-//    root->right->right->addLeft(new Node(8));
-//    root->right->right->addRight(new Node(9));
-//    Tree tree(root);
-//    for (auto preOrderIt = tree.beginPreOrderIterator(); preOrderIt != tree.endPreOrderIterator(); ++preOrderIt) {
-//        std::cout << preOrderIt->data << " ";
-//    }
-//    std::cout << std::endl;
-//    for (auto postOrderIt = tree.beginPostOrderIterator(); postOrderIt != tree.endPostOrderIterator(); ++postOrderIt) {
-//        std::cout << postOrderIt->data << " ";
-//    }
-//    std::cout << std::endl;
-//    auto it1 = tree.beginPreOrderIterator();
-//    auto it2 = ++it1;
-//    auto it3 = it1++;
-//    std::cout << it1->data << " " << it2->data << " " << it3->data << std::endl;
+//    printBinaryTreeUseIterator();
+//    printTreeUseIterator();
 //    return 0;
 //}

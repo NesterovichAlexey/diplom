@@ -1,5 +1,5 @@
-#ifndef DIPLOM_FILE_H
-#define DIPLOM_FILE_H
+#ifndef DIPLOM_FILESTRATEGY_H
+#define DIPLOM_FILESTRATEGY_H
 
 #include <fstream>
 #include <tuple>
@@ -8,10 +8,10 @@
 #include "SourceStrategy.h"
 
 template<typename Record>
-class File;
+class FileStrategy;
 
 template<typename... Types, int... Idx>
-class File<Record<std::tuple<Types...>, KeyIndex<Idx...>>>
+class FileStrategy<Record<std::tuple<Types...>, KeyIndex<Idx...>>>
         : public SourceStrategy<Record<std::tuple<Types...>, KeyIndex<Idx...>>> {
 public:
     typedef std::tuple<Types...> Tuple;
@@ -23,20 +23,33 @@ private:
     bool end = false;
     Record *record = nullptr;
     Record *nextRecord = nullptr;
+
+    void del(Record *rec) {
+        if (record != nullptr) {
+            delete rec;
+        }
+    }
+
 public:
-    explicit File(const std::string &fileName) : fileName(fileName) {
+    explicit FileStrategy(const std::string &fileName) :
+            fileName(fileName) {
         fin.open(fileName);
         next();
         next();
     }
 
-    ~File() { fin.close(); }
+    ~FileStrategy() {
+        del(record);
+        del(nextRecord);
+        fin.close();
+    }
 
     Record *getRecord() { return record; }
 
     Record *getNextRecord() { return nextRecord; }
 
     void next() {
+        del(record);
         record = nextRecord;
         if (hasNext()) {
             Tuple tuple;
@@ -51,7 +64,9 @@ public:
 
     bool hasNext() { return !end; }
 
-    File *copy() { return new File(fileName); }
+    std::shared_ptr<SourceStrategy<Record>> clone() {
+        return std::make_shared<FileStrategy>(fileName);
+    }
 };
 
-#endif //DIPLOM_FILE_H
+#endif //DIPLOM_FILESTRATEGY_H

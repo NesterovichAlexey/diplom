@@ -1,43 +1,86 @@
 #include <iostream>
 #include <fstream>
 #include <tuple>
+#include <sstream>
 
-#include "File.h"
+#include "FileStrategy.h"
 #include "Tuple.h"
 #include "Tree.h"
+#include "test.h"
 #include "ManySourceStrategy.h"
 
-int main() {
-    typedef std::tuple<int, int, int, int> Tuple;
-    typedef KeyIndex<0, 2> Key;
+void sampleSumOneLevel() {
+    typedef std::tuple<int, int, double> Tuple;
+    typedef KeyIndex<0, 1> Key;
     typedef Record<Tuple, Key> Record;
-    typedef File<Record> File;
-    Tree<Record> file(new File("../data.txt"));
-    int sum[3] = {0, 0, 0};
-    for (auto it = file.beginPostOrderIterator(); it != file.endPostOrderIterator(); ++it) {
+    typedef FileStrategy<Record> File;
+    File file("../data.txt");
+    Tree<Record> tree(file);
+    double sum = 0.;
+    for (auto it = tree.beginPostOrderIterator(); it != tree.endPostOrderIterator(); ++it) {
         if (it.isLeaf()) {
-            sum[it.getDepth()] = std::get<1>(it->tuple) * std::get<3>(it->tuple);
+            sum += std::get<2>(it->tuple);
         }
-        if (it.getDepth() != 0) {
-            sum[it.getDepth() - 1] += sum[it.getDepth()];
+        if (it.getDepth() == 1) {
+            std::cout << std::get<0>(it->key.value) << " " << sum << std::endl;
+            sum = 0.;
         }
-        std::cout << it.getDepth() << " "
-                  << it->key.value << " "
-                  << sum[it.getDepth()] << std::endl;
-        sum[it.getDepth()] = 0;
     }
     std::cout << std::endl;
-    for (auto it = file.beginPreOrderIterator();
-         it != file.endPreOrderIterator(); ++it) {
-        std::cout << it.getDepth() << " " << it->tuple << std::endl;
+}
+
+void sampleSumAllLevel() {
+    typedef std::tuple<int, int, double> Tuple;
+    typedef KeyIndex<0, 1> Key;
+    typedef Record<Tuple, Key> Record;
+    typedef FileStrategy<Record> File;
+    File file("../data.txt");
+    Tree<Record> tree(file);
+    double sum[3]{0, 0, 0};
+    for (auto it = tree.beginPostOrderIterator(); it != tree.endPostOrderIterator(); ++it) {
+        switch (it.getDepth()) {
+            case 0:
+                std::cout << "0 " << sum[0] << std::endl;
+                break;
+            case 1:
+                std::cout << "1 " << std::get<0>(it->key.value) << " " << sum[1] << std::endl;
+                sum[0] += sum[1];
+                sum[1] = 0;
+                break;
+            case 2:
+                sum[2] = std::get<2>(it->tuple);
+                std::cout << "2 " << it->key.value << " " << sum[2] << std::endl;
+                sum[1] += sum[2];
+                break;
+        }
     }
     std::cout << std::endl;
-//    typedef File<Record<std::tuple<int, int>, KeyIndex<0>>> File0;
-//    typedef File<Record<std::tuple<int, int, int>, KeyIndex<0, 1>>> File1;
-//    typedef File<Record<std::tuple<int, int, int, int>, KeyIndex<0, 1, 2>>> File2;
-//    ManyFilesStrategy<File0, File1, File2> files(std::make_tuple(File0("../data.txt0"), File1("../data.txt1"), File2("../data.txt2")));
-//    for (auto it = files.beginPreOrderIterator(); it != files.endPreOrderIterator(); ++it) {
-//        std::cout << it.getDepth() << " " << it->tuple << std::endl;
-//    }
+}
+
+void sample() {
+    typedef std::tuple<std::string, int, std::string, int> Tuple;
+    typedef KeyIndex<1, 0, 2> Key;
+    typedef Record<Tuple, Key> Record;
+    typedef FileStrategy<Record> File;
+    File file("../data2.txt");
+    Tree<Record> tree(file);
+    int sum = 0, n = 0;
+    for (auto it = tree.beginPostOrderIterator(); it != tree.endPostOrderIterator(); ++it) {
+        if (it.isLeaf()) {
+            sum += std::get<3>(it->tuple);
+            ++n;
+        }
+        if (it.getDepth() == 2) {
+            std::cout << std::get<1>(it->key.value) << " " << 1. * sum / n << std::endl;
+            sum = n = 0;
+        }
+    }
+}
+
+int main() {
+    testAll();
+    sampleSumOneLevel();
+    sampleSumAllLevel();
+    sample();
     return 0;
 }

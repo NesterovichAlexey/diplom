@@ -2,61 +2,129 @@
 #include <iostream>
 #include <vector>
 
-struct Node {
+struct BinaryNode {
     int data;
-    Node *parent = nullptr;
-    Node *left = nullptr;
-    Node *right = nullptr;
-    std::vector<Node> childrens;
+    BinaryNode *parent = nullptr;
+    BinaryNode *left = nullptr;
+    BinaryNode *right = nullptr;
 
-    Node(int data) : data(data) {}
+    BinaryNode(int data) : data(data) {}
 
-    void addLeft(Node *left) {
+    void addLeft(BinaryNode *left) {
         this->left = left;
         left->parent = this;
     }
 
-    void addRight(Node *right) {
+    void addRight(BinaryNode *right) {
         this->right = right;
         right->parent = this;
     }
 };
 
-void printPreOrder(Node *root) {
-    if (root == nullptr) {
+void printBinaryPreOrder(BinaryNode *node) {
+    if (node == nullptr) {
         return;
     }
-    std::cout << root->data << " ";
-    for (auto children : root->childrens) {
-        printPreOrder(&children);
-    }
-    printPreOrder(root->left);
-    printPreOrder(root->right);
+    std::cout << node->data << " ";
+    printBinaryPreOrder(node->left);
+    printBinaryPreOrder(node->right);
 }
 
-void printPostOrder(Node *root) {
-    if (root == nullptr) {
+void printBinaryPostOrder(BinaryNode *node) {
+    if (node == nullptr) {
         return;
     }
-    printPostOrder(root->left);
-    printPostOrder(root->right);
-    std::cout << root->data << " ";
+    printBinaryPostOrder(node->left);
+    printBinaryPostOrder(node->right);
+    std::cout << node->data << " ";
+}
+
+void printBinaryTree() {
+    std::vector<BinaryNode*> nodes;
+    for (int i = 0; i < 10; ++i) {
+        nodes.push_back(new BinaryNode(i));
+    }
+    auto *root = nodes[0];
+    root->addLeft(nodes[1]);
+    root->left->addLeft(nodes[2]);
+    root->left->left->addRight(nodes[3]);
+    root->left->addRight(nodes[4]);
+    root->left->right->addLeft(nodes[5]);
+    root->addRight(nodes[6]);
+    root->right->addRight(nodes[7]);
+    root->right->right->addLeft(nodes[8]);
+    root->right->right->addRight(nodes[9]);
+    std::cout << "Binary tree pre order\n";
+    printBinaryPreOrder(root);
+    std::cout << std::endl;
+    std::cout << "Binary tree post order\n";
+    printBinaryPostOrder(root);
+    std::cout << std::endl;
+    for (int i = 0; i < 10; ++i) {
+        delete nodes[i];
+    }
+}
+
+struct Node {
+    int data;
+    Node *parent = nullptr;
+    std::vector<Node*> children;
+
+    Node(int data) : data(data) {}
+
+    void addNode(Node *node) {
+        children.push_back(node);
+        node->parent = this;
+    }
+};
+
+void printPreOrder(Node *node) {
+    if (node == nullptr) {
+        return;
+    }
+    std::cout << node->data << " ";
+    for (auto &child : node->children) {
+        printPreOrder(child);
+    }
+}
+
+void printPostOrder(Node *node) {
+    if (node == nullptr) {
+        return;
+    }
+    for (auto &child : node->children) {
+        printPostOrder(child);
+    }
+    std::cout << node->data << " ";
+}
+
+void printTree() {
+    std::vector<Node*> nodes;
+    for (int i = 0; i < 10; ++i) {
+        nodes.push_back(new Node(i));
+    }
+    nodes[0]->addNode(nodes[1]);
+    nodes[0]->addNode(nodes[2]);
+    nodes[0]->addNode(nodes[3]);
+    nodes[1]->addNode(nodes[4]);
+    nodes[1]->addNode(nodes[5]);
+    nodes[2]->addNode(nodes[6]);
+    nodes[3]->addNode(nodes[7]);
+    nodes[3]->addNode(nodes[8]);
+    nodes[7]->addNode(nodes[9]);
+    std::cout << "Tree pre order\n";
+    printPreOrder(nodes[0]);
+    std::cout << std::endl;
+    std::cout << "Tree post order\n";
+    printPostOrder(nodes[0]);
+    std::cout << std::endl;
+    for (int i = 0; i < 10; ++i) {
+        delete nodes[i];
+    }
 }
 
 //int main() {
-//    Node *root = new Node(0);
-//    root->addLeft(new Node(1));
-//    root->left->addLeft(new Node(2));
-//    root->left->left->addRight(new Node(3));
-//    root->left->addRight(new Node(4));
-//    root->left->right->addLeft(new Node(5));
-//    root->addRight(new Node(6));
-//    root->right->addRight(new Node(7));
-//    root->right->right->addLeft(new Node(8));
-//    root->right->right->addRight(new Node(9));
-//    printPreOrder(root);
-//    std::cout << std::endl;
-//    printPostOrder(root);
-//    std::cout << std::endl;
+//    printBinaryTree();
+//    printTree();
 //    return 0;
 //}

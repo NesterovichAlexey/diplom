@@ -1,7 +1,7 @@
 //#ifndef DIPLOM_MANYSOURCESTRATEGY_H
 //#define DIPLOM_MANYSOURCESTRATEGY_H
 //
-//#include "File.h"
+//#include "FileStrategy.h"
 //#include "Record.h"
 //#include "Key.h"
 //#include <tuple>
@@ -10,10 +10,10 @@
 //class ManySourceStrategy;
 //
 //template<typename... Record>
-//class ManySourceStrategy<File<Record>...> {
+//class ManySourceStrategy<FileStrategy<Record>...> {
 //private:
 //    typedef std::tuple<Record...> RecordTuple;
-//    typedef std::tuple<File<Record>...> FileTuple;
+//    typedef std::tuple<FileStrategy<Record>...> FileTuple;
 //    FileTuple files;
 //public:
 //    explicit ManySourceStrategy(FileTuple files) : files(files) {}
